@@ -298,7 +298,7 @@ export default class Runner {
         this.distanceRan += this.currentSpeed * deltaTime / this.msPerFrame;
 
         if (this.currentSpeed < this.config.MAX_SPEED) {
-          this.currentSpeed += this.config.ACCELERATION;
+          this.setSpeed(this.currentSpeed + this.config.ACCELERATION);
         }
       } else {
         this.gameOver();
