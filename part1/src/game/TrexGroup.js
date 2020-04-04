@@ -66,7 +66,7 @@ export default class TrexGroup {
           tRex.crashed = true;
           this.onCrash( tRex, state );
         } else {
-          const action = await this.onRunning(tRex, state );
+          const action = await this.onRunning(tRex, state);
           if (action === 1) {
             tRex.startJump();
           } else if (action === -1) {

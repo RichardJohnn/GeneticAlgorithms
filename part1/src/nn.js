@@ -21,15 +21,15 @@ function setup() {
 }
 // variable which tells whether thethe game is being loaded for the first time i.e. not a reset
 
-let firstTime = true; 
+let firstTime = true;
 
 
 function handleReset(dinos) {
   // running this for single dino at a time
   // console.log(dinos);
-  
-  const dino = dinos[0]; 
-  // if the game is being started for the first time initiate 
+
+  const dino = dinos[0];
+  // if the game is being started for the first time initiate
   // the model and compile it to make it ready for training and predicting
   if (firstTime) {
     firstTime = false;
@@ -40,21 +40,21 @@ function handleReset(dinos) {
     // sigmoid activation function
     // and output of 6
     dino.model.add(tf.layers.dense({
-      inputShape:[3],
+      inputShape:[4],
       activation:'sigmoid',
-      units:6
+      units:7
     }))
 
     /* this is the second output layer with 6 inputs coming from the previous hidden layer
     activation is again sigmoid and output is given as 2 units 10 for not jump and 01 for jump
     */
     dino.model.add(tf.layers.dense({
-      inputShape:[6],
+      inputShape:[7],
       activation:'sigmoid',
-      units:2
+      units:4
     }))
 
-    /* compiling the model using meanSquaredError loss function and adam 
+    /* compiling the model using meanSquaredError loss function and adam
     optimizer with a learning rate of 0.1 */
     dino.model.compile({
       loss:'meanSquaredError',
@@ -66,7 +66,7 @@ function handleReset(dinos) {
       inputs: [],
       labels: []
     };
-    
+
   } else {
     // Train the model before restarting.
     // log into console that model will now be trained
@@ -86,56 +86,73 @@ function handleReset(dinos) {
 
 function handleRunning( dino, state ) {
   return new Promise((resolve) => {
-    if (!dino.jumping) {
       // whenever the dino is not jumping decide whether it needs to jump or not
-      let action = 0;// variable for action 1 for jump 0 for not
-      // call model.predict on the state vecotr after converting it to tensor2d object
+    let action = 0;// variable for action 1 for jump -1 for duck
+    // call model.predict on the state vector after converting it to tensor2d object
+    if (Math.random() > .8) {
+      console.log('PREDUCT');
       const prediction = dino.model.predict(tf.tensor2d([convertStateToVector(state)]));
 
       // the predict function returns a tensor we get the data in a promise as result
-      // and based don result decide the action
+      // and basedd on result decide the action
       const predictionPromise = prediction.data();
-      
+
       predictionPromise.then((result) => {
-        // console.log(result);
+        //console.log(result);
         // converting prediction to action
-        if (result[1] > result[0]) {
-          // we want to jump
+        const mightAsWellJump = result[0] > result[1];
+        const duckDuckGo = result[2] > result[3]
+        if (mightAsWellJump) {
+          // jump
           action = 1;
-          // set last jumping state to current state
           dino.lastJumpingState = state;
-        } else {
-          // set running state to current state
+        }
+        if (duckDuckGo) {
+          // duck
+          action = -1;
+          dino.lastDuckingState = state;
+        }
+
+        if (!mightAsWellJump && !duckDuckGo) {
           dino.lastRunningState = state;
         }
+
         resolve(action);
       });
-    } else {
+    }
+    else {
       resolve(0);
     }
   });
 }
 /**
- * 
- * @param {object} dino 
+ *
+ * @param {object} dino
  * handles the crash of a dino before restarting the game
- * 
+ *
  */
-function handleCrash( dino ) {
+function handleCrash( dino, state ) {
   let input = null;
   let label = null;
   // check if at the time of crash dino was jumping or not
+  label = [1, 0, .01, 0];
+
   if (dino.jumping) {
-    // Should not jump next time
-    // convert state object to array
+    label[0] = 0;
+    label[1] = 1;
     input = convertStateToVector(dino.lastJumpingState);
-    label = [1, 0];
-  } else {
-    // Should jump next time
-    // convert state object to array
-    input = convertStateToVector(dino.lastRunningState);
-    label = [0, 1];
   }
+
+  if (dino.ducking) {
+    label[2] = 0;
+    label[3] = 1;
+    input = convertStateToVector(dino.lastDuckingState);
+  }
+
+  if (!dino.ducking && !dino.jumping) {
+    input = convertStateToVector(dino.lastRunningState);
+  }
+
   // push the new input to the training set
   dino.training.inputs.push(input);
   // push the label to labels
@@ -143,20 +160,21 @@ function handleCrash( dino ) {
 }
 
 /**
- * 
+ *
  * @param {object} state
- * returns an array 
+ * returns an array
  * converts state to a feature scaled array
  */
 function convertStateToVector(state) {
   if (state) {
     return [
       state.obstacleX / CANVAS_WIDTH,
+      state.obstacleY / CANVAS_HEIGHT,
       state.obstacleWidth / CANVAS_WIDTH,
-      state.speed / 100
+      state.speed / 100,
     ];
   }
-  return [0, 0, 0];
+  return [0, 0, 0, 0];
 }
 // call setup on loading content
 document.addEventListener('DOMContentLoaded', setup);
