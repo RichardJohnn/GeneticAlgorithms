@@ -103,7 +103,7 @@ function handleRunning( dino, state ) {
       predictionPromise.then((result) => {
         //console.log(result);
         const mightAsWellJump = result[0] > result[1] && result[0] > result[2];
-        const duckDuckGo = result[2] > result[3]
+        const duckDuckGo = result[1] > result[0] && result[1] > result[2]
         if (mightAsWellJump) {
           // jump
           action = 1;
