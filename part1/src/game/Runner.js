@@ -20,7 +20,7 @@ export default class Runner {
   static config = {
     ACCELERATION: 0.001,
     BG_CLOUD_SPEED: 0.2,
-    CLEAR_TIME: 0,
+    CLEAR_TIME: 1000,
     CLOUD_FREQUENCY: 0.5,
     GAP_COEFFICIENT: 0.6,
     GRAVITY: 0.6,

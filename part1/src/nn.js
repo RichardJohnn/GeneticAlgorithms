@@ -36,22 +36,22 @@ function handleReset(dinos) {
     // creating a tensorflow sequential model
     dino.model = tf.sequential();
     // dino.model.init();
-    // adding the first hidden layer to the model using with 3 inputs ,
+    // adding the first hidden layer to the model using with 4 inputs ,
     // sigmoid activation function
     // and output of 6
     dino.model.add(tf.layers.dense({
       inputShape:[4],
       activation:'sigmoid',
-      units:7
+      units:6
     }))
 
     /* this is the second output layer with 6 inputs coming from the previous hidden layer
     activation is again sigmoid and output is given as 2 units 10 for not jump and 01 for jump
     */
     dino.model.add(tf.layers.dense({
-      inputShape:[7],
+      inputShape:[6],
       activation:'sigmoid',
-      units:4
+      units:3
     }))
 
     /* compiling the model using meanSquaredError loss function and adam
@@ -89,8 +89,11 @@ function handleRunning( dino, state ) {
       // whenever the dino is not jumping decide whether it needs to jump or not
     let action = 0;// variable for action 1 for jump -1 for duck
     // call model.predict on the state vector after converting it to tensor2d object
-    if (Math.random() > .8) {
-      console.log('PREDUCT');
+    let runPredict = (!dino.jumping && !dino.ducking);
+    let jumpPredict = (dino.jumping && Math.random() > .9);
+    let duckPredict = (dino.ducking && Math.random() > .9);
+    if (runPredict || jumpPredict || duckPredict) {
+
       const prediction = dino.model.predict(tf.tensor2d([convertStateToVector(state)]));
 
       // the predict function returns a tensor we get the data in a promise as result
@@ -99,16 +102,15 @@ function handleRunning( dino, state ) {
 
       predictionPromise.then((result) => {
         //console.log(result);
-        // converting prediction to action
-        const mightAsWellJump = result[0] > result[1];
+        const mightAsWellJump = result[0] > result[1] && result[0] > result[2];
         const duckDuckGo = result[2] > result[3]
         if (mightAsWellJump) {
           // jump
           action = 1;
           dino.lastJumpingState = state;
         }
+
         if (duckDuckGo) {
-          // duck
           action = -1;
           dino.lastDuckingState = state;
         }
@@ -134,18 +136,19 @@ function handleRunning( dino, state ) {
 function handleCrash( dino, state ) {
   let input = null;
   let label = null;
-  // check if at the time of crash dino was jumping or not
-  label = [1, 0, .01, 0];
+  label = [1, .1, 0];
 
   if (dino.jumping) {
     label[0] = 0;
-    label[1] = 1;
+    label[1] = .1;
+    label[2] = 1;
     input = convertStateToVector(dino.lastJumpingState);
   }
 
   if (dino.ducking) {
-    label[2] = 0;
-    label[3] = 1;
+    label[0] = .1;
+    label[1] = 0;
+    label[2] = 1;
     input = convertStateToVector(dino.lastDuckingState);
   }
 
