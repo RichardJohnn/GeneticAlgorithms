@@ -12,7 +12,8 @@ function setup() {
     DINO_COUNT: 1,
     onReset: handleReset,
     onCrash: handleCrash,
-    onRunning: handleRunning
+    onRunning: handleRunning,
+    onKey: handleKey
   });
   // Set runner as a global variable if you need runtime debugging.
   window.runner = runner;
@@ -101,6 +102,9 @@ function handleRunning( dino, state ) {
       const predictionPromise = prediction.data();
 
       predictionPromise.then((result) => {
+        dino.lastPrediction = result;
+        dino.lastState = state;
+
         //console.log(result);
         const mightAsWellJump = result[0] > result[1] && result[0] > result[2];
         const duckDuckGo = result[1] > result[0] && result[1] > result[2]
@@ -123,7 +127,7 @@ function handleRunning( dino, state ) {
       });
     }
     else {
-      resolve(0);
+      resolve(action);
     }
   });
 }
@@ -135,18 +139,21 @@ function handleRunning( dino, state ) {
  */
 function handleCrash( dino, state ) {
   let input = null;
-  let label = null;
-  label = [1, .1, 0];
+  let label = [1, .8, 0];
 
   if (dino.jumping) {
     label[0] = 0;
-    label[1] = .1;
+    label[1] = .25;
     label[2] = 1;
     input = convertStateToVector(dino.lastJumpingState);
+
+    //fast fall?
+    dino.training.inputs.push(convertStateToVector(dino.lastState));
+    dino.training.labels.push([0, .5, .3]);
   }
 
   if (dino.ducking) {
-    label[0] = .1;
+    label[0] = .5;
     label[1] = 0;
     label[2] = 1;
     input = convertStateToVector(dino.lastDuckingState);
@@ -161,6 +168,31 @@ function handleCrash( dino, state ) {
   // push the label to labels
   dino.training.labels.push(label);
 }
+
+function handleKey(action, obstacle, dino) {
+  if(obstacle === undefined)
+    return;
+
+  let label = [0, 0, 0];
+  if (action === 1)
+    label[0] = 1;
+  else if (action === -1)
+    label[1] = 1;
+  else
+    label[2] = 1;
+  console.log(label);
+
+  const state = {
+    obstacleX: obstacle.xPos,
+    obstacleY: obstacle.yPos,
+    obstacleWidth: obstacle.width,
+    speed: runner.currentSpeed
+  };
+
+  dino.training.labels.push(label);
+  dino.training.inputs.push(convertStateToVector(state));
+}
+
 
 /**
  *

@@ -35,7 +35,8 @@ export default class Runner {
     // Events
     onReset: noop,
     onRunning: noop,
-    onCrash: noop
+    onCrash: noop,
+    onKey: noop
   };
 
   static classes = {
@@ -347,8 +348,10 @@ export default class Runner {
       if (Runner.keycodes.JUMP[e.keyCode]) {
         e.preventDefault();
         this.tRex.startJump(this.currentSpeed);
+        this.config.onKey(1, this.horizon.obstacles[0], this.tRex);
       } else if (Runner.keycodes.DUCK[e.keyCode]) {
         e.preventDefault();
+        this.config.onKey(-1, this.horizon.obstacles[0], this.tRex);
         if (this.tRex.jumping) {
           // Speed drop, activated only when jump key is not pressed.
           this.tRex.setSpeedDrop();
@@ -356,6 +359,9 @@ export default class Runner {
           // Duck.
           this.tRex.setDuck(true);
         }
+      }
+      else {
+        this.config.onKey(0, this.horizon.obstacles[0], this.tRex);
       }
     } else if (this.crashed) {
       this.restart();
