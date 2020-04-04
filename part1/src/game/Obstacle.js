@@ -48,7 +48,7 @@ export default class Obstacle {
       yPos: 90,
       multipleSpeed: 7,
       minGap: 120,
-      minSpeed: 0,
+      minSpeed: 6.4,
       collisionBoxes: [
         new CollisionBox(0, 12, 7, 38),
         new CollisionBox(8, 0, 7, 49),
@@ -62,7 +62,7 @@ export default class Obstacle {
       yPos: [100, 75, 50], // Variable height.
       yPosMobile: [100, 50], // Variable height mobile.
       multipleSpeed: 999,
-      minSpeed: 8.5,
+      minSpeed: 0,
       minGap: 150,
       collisionBoxes: [
         new CollisionBox(15, 15, 16, 5),
